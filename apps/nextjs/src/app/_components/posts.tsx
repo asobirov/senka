@@ -15,7 +15,7 @@ import {
 import { Input } from "@senka/ui/input";
 import { toast } from "@senka/ui/toast";
 
-import { api } from "~/trpc/react";
+import { api } from "@/trpc/react";
 
 export function CreatePostForm() {
   const form = useForm({

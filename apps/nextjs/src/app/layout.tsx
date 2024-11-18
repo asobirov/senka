@@ -1,15 +1,16 @@
 import type { Metadata, Viewport } from "next";
-import { cn } from "@senka/ui";
-import { ThemeProvider, ThemeToggle } from "@senka/ui/theme";
-import { Toaster } from "@senka/ui/toast";
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
 
-import { TRPCReactProvider } from "~/trpc/react";
+import { cn } from "@senka/ui";
+import { ThemeProvider, ThemeToggle } from "@senka/ui/theme";
+import { Toaster } from "@senka/ui/toast";
 
-import "~/app/globals.css";
+import { TRPCReactProvider } from "@/trpc/react";
 
-import { env } from "~/env";
+import "@/app/globals.css";
+
+import { env } from "@/env";
 
 export const metadata: Metadata = {
   metadataBase: new URL(
