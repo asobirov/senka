@@ -1,6 +1,5 @@
+import { authConfig } from "@senka/auth/config";
 import NextAuth from "next-auth";
-
-import { authConfig } from "@acme/auth/config";
 
 export const { auth: middleware } = NextAuth(authConfig);
 

@@ -2,8 +2,8 @@ import type { Session as NextAuthSession } from "next-auth";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import NextAuth from "next-auth";
 
-import { db } from "@acme/db/client";
-import { Account, Session, User } from "@acme/db/schema";
+import { db } from "@senka/db/client";
+import { Account, Session, User } from "@senka/db/schema";
 
 import { authConfig } from "./config";
 

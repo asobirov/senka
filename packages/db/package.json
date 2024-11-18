@@ -1,5 +1,5 @@
 {
-  "name": "@acme/db",
+  "name": "@senka/db",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -37,9 +37,9 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@acme/eslint-config": "workspace:*",
-    "@acme/prettier-config": "workspace:*",
-    "@acme/tsconfig": "workspace:*",
+    "@senka/eslint-config": "workspace:*",
+    "@senka/prettier-config": "workspace:*",
+    "@senka/tsconfig": "workspace:*",
     "@types/pg": "^8.11.10",
     "dotenv-cli": "^7.4.2",
     "drizzle-kit": "^0.26.2",
@@ -47,5 +47,5 @@
     "prettier": "catalog:",
     "typescript": "catalog:"
   },
-  "prettier": "@acme/prettier-config"
+  "prettier": "@senka/prettier-config"
 }

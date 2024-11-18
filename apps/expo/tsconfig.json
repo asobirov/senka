@@ -1,5 +1,5 @@
 {
-  "extends": ["@acme/tsconfig/base.json"],
+  "extends": ["@senka/tsconfig/base.json"],
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
