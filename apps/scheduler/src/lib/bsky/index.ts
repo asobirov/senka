@@ -1,6 +1,7 @@
 import type {
   ProfileView,
   ProfileViewBasic,
+  ProfileViewDetailed,
 } from "@atproto/api/dist/client/types/app/bsky/actor/defs";
 import { agent } from "@/lib/bsky/agent";
 
@@ -15,6 +16,10 @@ export async function storeProfileAndFollowers(actor: string) {
     actor: actor,
   });
 
+  if (isEmptyProfile(profile)) {
+    console.log(`Skipping empty profile ${profile.did}`);
+    return null;
+  }
   // console.log(
   //   "known",
   //   JSON.stringify(profile.viewer?.knownFollowers?.followers, null, 2),
@@ -171,4 +176,12 @@ const upsertFollows = async (
     did: following.did,
     parsedAt: following.parsedAt,
   };
+};
+
+const isEmptyProfile = (profile: ProfileViewDetailed) => {
+  const { followersCount = 0, followsCount = 0, postsCount = 0 } = profile;
+
+  const activityScore = followersCount + followsCount + postsCount;
+
+  return activityScore < 15;
 };
