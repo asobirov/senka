@@ -5,6 +5,7 @@ import type {
 } from "@atproto/api/dist/client/types/app/bsky/actor/defs";
 import { agent } from "@/lib/bsky/agent";
 
+import { eq } from "@senka/db";
 import { db } from "@senka/db/client";
 import { User, UserFollower } from "@senka/db/schema";
 
@@ -17,7 +18,8 @@ export async function storeProfileAndFollowers(actor: string) {
   });
 
   if (isEmptyProfile(profile)) {
-    console.log(`Skipping empty profile ${profile.did}`);
+    console.log(`Deleting empty profile ${profile.did}`);
+    await db.delete(User).where(eq(User.did, profile.did));
     return null;
   }
   // console.log(
@@ -26,7 +28,7 @@ export async function storeProfileAndFollowers(actor: string) {
   // );
   // console.log("followers", JSON.stringify(followers, null, 2));
 
-  console.log(`Saving profile for ${profile.did}`);
+  // console.log(`Saving profile for ${profile.did}`);
   await db
     .insert(User)
     .values({
@@ -49,7 +51,7 @@ export async function storeProfileAndFollowers(actor: string) {
         parsedAt: new Date(),
       },
     });
-  console.log(`Saved profile for ${profile.did}`);
+  // console.log(`Saved profile for ${profile.did}`);
 
   const {
     data: { followers },
@@ -85,7 +87,7 @@ const upsertFollower = async (
   userDid: string,
   followerProfile: ProfileView,
 ) => {
-  console.log(`Saving follower ${followerProfile.did} of ${userDid}`);
+  // console.log(`Saving follower ${followerProfile.did} of ${userDid}`);
   const follower = await db.query.User.findFirst({
     where: (User, { eq }) => eq(User.did, followerProfile.did),
     columns: {
@@ -95,7 +97,7 @@ const upsertFollower = async (
   });
 
   if (!follower) {
-    console.log(`Saving follower ${followerProfile.did}`);
+    // console.log(`Saving follower ${followerProfile.did}`);
     await db
       .insert(User)
       .values({
@@ -133,7 +135,7 @@ const upsertFollows = async (
   userDid: string,
   followingProfile: ProfileViewBasic,
 ) => {
-  console.log(`Saving ${userDid} following ${followingProfile.did}`);
+  // console.log(`Saving ${userDid} following ${followingProfile.did}`);
 
   const following = await db.query.User.findFirst({
     where: (User, { eq }) => eq(User.did, followingProfile.did),
@@ -144,7 +146,7 @@ const upsertFollows = async (
   });
 
   if (!following) {
-    console.log(`Saving following ${followingProfile.did}`);
+    // console.log(`Saving following ${followingProfile.did}`);
     await db
       .insert(User)
       .values({
@@ -181,7 +183,11 @@ const upsertFollows = async (
 const isEmptyProfile = (profile: ProfileViewDetailed) => {
   const { followersCount = 0, followsCount = 0, postsCount = 0 } = profile;
 
+  if (followersCount < 10 && followsCount < 10) {
+    return true;
+  }
+
   const activityScore = followersCount + followsCount + postsCount;
 
-  return activityScore < 15;
+  return activityScore < 100;
 };

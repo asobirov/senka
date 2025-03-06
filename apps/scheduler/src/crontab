@@ -10,5 +10,5 @@
 # │ │ │ │ │ │    │     │
 # * * * * * task ?opts {payload}  https://worker.graphile.org/docs/cron
 
-# every day at 00:00
-0 0 * * * FOO
+# every 10 minutes
+*/10 * * * * check-inactive-resources
