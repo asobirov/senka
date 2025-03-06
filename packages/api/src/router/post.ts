@@ -2,7 +2,7 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod";
 
 import { desc, eq } from "@senka/db";
-import { CreatePostSchema, Post } from "@senka/db/schema";
+import { Post } from "@senka/db/schema";
 
 import { protectedProcedure, publicProcedure } from "../trpc";
 
@@ -27,14 +27,4 @@ export const postRouter = {
         where: eq(Post.id, input.id),
       });
     }),
-
-  create: protectedProcedure
-    .input(CreatePostSchema)
-    .mutation(({ ctx, input }) => {
-      return ctx.db.insert(Post).values(input);
-    }),
-
-  delete: protectedProcedure.input(z.string()).mutation(({ ctx, input }) => {
-    return ctx.db.delete(Post).where(eq(Post.id, input));
-  }),
 } satisfies TRPCRouterRecord;

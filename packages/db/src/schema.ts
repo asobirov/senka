@@ -32,14 +32,6 @@ export const Post = pgTable("post", (t) => ({
     .$onUpdateFn(() => sql`now()`),
 }));
 
-export const CreatePostSchema = createInsertSchema(Post, {
-  content: z.string().max(256),
-}).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
 export const PostRelations = relations(Post, ({ one, many }) => ({
   author: one(User, { fields: [Post.authorDid], references: [User.did] }),
   media: many(PostMedia),
