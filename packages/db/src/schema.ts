@@ -1,36 +1,47 @@
 import { relations, sql } from "drizzle-orm";
-import { pgTable, primaryKey } from "drizzle-orm/pg-core";
+import { index, pgTable, primaryKey } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 /**
  * Post table and relations
  */
-export const Post = pgTable("post", (t) => ({
-  id: t.text().primaryKey(), // Bluesky post ID
-  uri: t.text().unique(), // Bluesky post URI
+export const Post = pgTable(
+  "post",
+  (t) => ({
+    id: t.text().primaryKey(), // Bluesky post ID
+    uri: t.text().unique(), // Bluesky post URI
 
-  content: t.text().notNull(),
+    content: t.text().notNull(),
 
-  likesCount: t.integer().default(0),
-  replyCount: t.integer().default(0),
-  repostCount: t.integer().default(0),
-  quoteCount: t.integer().default(0),
+    likesCount: t.integer().default(0),
+    replyCount: t.integer().default(0),
+    repostCount: t.integer().default(0),
+    quoteCount: t.integer().default(0),
 
-  websiteUrl: t.text("website_url"),
+    websiteUrl: t.text("website_url"),
 
-  authorDid: t
-    .text("author_did")
-    .notNull()
-    .references(() => User.did, { onDelete: "cascade" }),
+    authorDid: t
+      .text("author_did")
+      .notNull()
+      .references(() => User.did, { onDelete: "cascade" }),
 
-  createdAt: t.timestamp().defaultNow().notNull(),
-  indexedAt: t.timestamp({ mode: "date", withTimezone: true }).defaultNow(),
+    createdAt: t.timestamp().defaultNow().notNull(),
+    indexedAt: t.timestamp({ mode: "date", withTimezone: true }).defaultNow(),
 
-  updatedAt: t
-    .timestamp({ mode: "date", withTimezone: true })
-    .$onUpdateFn(() => sql`now()`),
-}));
+    updatedAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .$onUpdateFn(() => sql`now()`),
+  }),
+  (t) => ({
+    authorDidIdx: index("post_author_did_idx").on(t.authorDid),
+    createdAtIdx: index("post_created_at_idx").on(t.createdAt),
+    // Engagement counts indexes
+    likesCountIdx: index("post_likes_count_idx").on(t.likesCount),
+    replyCountIdx: index("post_reply_count_idx").on(t.replyCount),
+    repostCountIdx: index("post_repost_count_idx").on(t.repostCount),
+  }),
+);
 
 export const PostRelations = relations(Post, ({ one, many }) => ({
   author: one(User, { fields: [Post.authorDid], references: [User.did] }),
@@ -90,42 +101,56 @@ export const PostMediaRelations = relations(PostMedia, ({ one }) => ({
 /**
  * Link tables and relations
  */
-export const Link = pgTable("link", (t) => ({
-  id: t.uuid().notNull().primaryKey().defaultRandom(),
+export const Link = pgTable(
+  "link",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
 
-  postId: t
-    .text("post_id")
-    .notNull()
-    .references(() => Post.id, { onDelete: "cascade" }),
+    postId: t
+      .text("post_id")
+      .notNull()
+      .references(() => Post.id, { onDelete: "cascade" }),
 
-  uri: t.text().notNull().unique(),
-  domainUrl: t
-    .text()
-    .notNull()
-    .references(() => Domain.url, {
-      onDelete: "set null",
-    }),
-  trustScore: t.integer().notNull().default(0),
+    uri: t.text().notNull().unique(),
+    domainUrl: t
+      .text()
+      .notNull()
+      .references(() => Domain.url, {
+        onDelete: "set null",
+      }),
+    trustScore: t.integer().notNull().default(0),
 
-  $type: t.text(),
+    $type: t.text(),
 
-  lastCheckedAt: t.timestamp({ mode: "date", withTimezone: true }),
-  parsedAt: t.timestamp({ mode: "date", withTimezone: true }).defaultNow(),
-}));
+    lastCheckedAt: t.timestamp({ mode: "date", withTimezone: true }),
+    parsedAt: t.timestamp({ mode: "date", withTimezone: true }).defaultNow(),
+  }),
+  (t) => ({
+    postIdIdx: index("link_post_id_idx").on(t.postId),
+    domainUrlIdx: index("link_domain_url_idx").on(t.domainUrl),
+    trustScoreIdx: index("link_trust_score_idx").on(t.trustScore),
+  }),
+);
 
 export const LinkRelations = relations(Link, ({ one }) => ({
   post: one(Post, { fields: [Link.postId], references: [Post.id] }),
   domain: one(Domain, { fields: [Link.domainUrl], references: [Domain.url] }),
 }));
 
-export const Domain = pgTable("domain", (t) => ({
-  url: t.text().notNull().unique(),
+export const Domain = pgTable(
+  "domain",
+  (t) => ({
+    url: t.text().notNull().primaryKey(),
 
-  isSslValid: t.boolean().notNull().default(false),
-  trustScore: t.integer().notNull().default(0),
+    isSslValid: t.boolean().notNull().default(false),
+    trustScore: t.integer().notNull().default(0),
 
-  lastCheckedAt: t.timestamp({ mode: "date", withTimezone: true }),
-}));
+    lastCheckedAt: t.timestamp({ mode: "date", withTimezone: true }),
+  }),
+  (t) => ({
+    trustScoreIdx: index("domain_trust_score_idx").on(t.trustScore),
+  }),
+);
 
 export const DomainRelations = relations(Domain, ({ many }) => ({
   links: many(Link),
@@ -134,20 +159,27 @@ export const DomainRelations = relations(Domain, ({ many }) => ({
 /**
  * User tables and relations
  */
-export const User = pgTable("user", (t) => ({
-  did: t.varchar({ length: 255 }).notNull().primaryKey(),
+export const User = pgTable(
+  "user",
+  (t) => ({
+    did: t.varchar({ length: 255 }).notNull().primaryKey(),
 
-  handle: t.varchar({ length: 255 }).unique().notNull(),
-  displayName: t.varchar({ length: 255 }),
-  avatar: t.varchar({ length: 255 }),
+    handle: t.varchar({ length: 255 }).unique().notNull(),
+    displayName: t.varchar({ length: 255 }),
+    avatar: t.varchar({ length: 255 }),
 
-  followersCount: t.integer().default(0),
-  followsCount: t.integer().default(0),
+    followersCount: t.integer().default(0),
+    followsCount: t.integer().default(0),
 
-  parsedAt: t.timestamp({ mode: "date", withTimezone: true }),
+    parsedAt: t.timestamp({ mode: "date", withTimezone: true }),
 
-  createdAt: t.timestamp().defaultNow().notNull(),
-}));
+    createdAt: t.timestamp().defaultNow().notNull(),
+  }),
+  (t) => ({
+    followersCountIdx: index("user_followers_count_idx").on(t.followersCount),
+    followsCountIdx: index("user_follows_count_idx").on(t.followsCount),
+  }),
+);
 
 export const UserFollower = pgTable(
   "user_follower",
@@ -166,6 +198,8 @@ export const UserFollower = pgTable(
   }),
   (t) => ({
     pk: primaryKey({ columns: [t.userDid, t.followerDid] }), // Prevent duplicate follows
+    userIdx: index("user_follower_user_idx").on(t.userDid),
+    followerIdx: index("user_follower_follower_idx").on(t.followerDid),
   }),
 );
 
