@@ -28,6 +28,7 @@
     "next": "^14.2.23",
     "react": "catalog:react18",
     "react-dom": "catalog:react18",
+    "react-force-graph-3d": "^1.26.0",
     "superjson": "2.2.2",
     "zod": "catalog:"
   },
