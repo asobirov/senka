@@ -12,12 +12,12 @@ import { User, UserFollower } from "@senka/db/schema";
 /**
  * Saves the profile and followers of a user to the database.
  */
-export async function storeProfileAndFollowers(actor: string) {
+export async function storeProfileAndFollowers(actor: string, forceStore = false) {
   const { data: profile } = await agent.getProfile({
     actor: actor,
   });
 
-  if (isEmptyProfile(profile)) {
+  if (!forceStore && isEmptyProfile(profile)) {
     console.log(`Deleting empty profile ${profile.did}`);
     await db.delete(User).where(eq(User.did, profile.did));
     return null;

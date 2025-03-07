@@ -11,6 +11,7 @@ export const userRouter = {
     console.log("Fetching user ids");
     const userIds = await ctx.db.query.User.findMany({
       limit: USERS_LIMIT,
+      where: (users, { isNotNull }) => isNotNull(users.parsedAt),
       orderBy: (users) => [
         desc(sql`${users.followersCount} + ${users.followsCount}`),
         desc(users.followersCount),
@@ -85,9 +86,9 @@ export const userRouter = {
         displayName: user.displayName,
         avatar: user.avatar,
         type: "user",
-        val:
-          Math.sqrt((user.followersCount ?? 0) + (user.followsCount ?? 0)) *
-          VAL_SCALE, // Node size based on connections
+        // val:
+        //   Math.sqrt((user.followersCount ?? 0) + (user.followsCount ?? 0)) *
+        //   VAL_SCALE, // Node size based on connections
       })),
       // Post nodes
       ...users.flatMap((user) =>

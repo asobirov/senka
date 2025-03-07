@@ -11,9 +11,10 @@ export const storeActorProfile = createTask({
   name: "store-actor-profile",
   schema: z.object({
     actor: z.string(),
+    forceStore: z.boolean().optional(),
   }),
-  task: async ({ actor }) => {
-    const profile = await storeProfileAndFollowers(actor);
+  task: async ({ actor, forceStore }) => {
+    const profile = await storeProfileAndFollowers(actor, forceStore);
 
     if (!profile) {
       console.log(`Skipping ${actor} because it did not match the criteria`);
