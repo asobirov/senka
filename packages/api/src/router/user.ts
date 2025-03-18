@@ -6,7 +6,7 @@ import { publicProcedure } from "../trpc";
 
 export const userRouter = {
   graph: publicProcedure.query(async ({ ctx }) => {
-    const USERS_LIMIT = 800;
+    const USERS_LIMIT = 100;
 
     console.log("Fetching user ids");
     const userIds = await ctx.db.query.User.findMany({
