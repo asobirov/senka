@@ -1,4 +1,5 @@
 import type { StorePostsPayload } from "@/tasks/store/store-posts-by-actor";
+import { checkInactiveResources } from "@/tasks/check-inactive-resources";
 import { storePosts } from "@/tasks/store/store-posts-by-actor";
 
 import type { StoreActorProfilePayload } from "./store/store-actor-profile";
@@ -18,7 +19,11 @@ interface TaskNameToPayloadMap {
   "store-posts": StorePostsPayload;
 }
 
-export const tasks = [storeActorProfile, storePosts] as const;
+export const tasks = [
+  storeActorProfile,
+  storePosts,
+  checkInactiveResources,
+] as const;
 
 type TasksList<T extends typeof tasks = typeof tasks> = Record<
   T[number]["name"],

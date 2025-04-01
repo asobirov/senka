@@ -11,7 +11,14 @@ import { isLink as isLinkFacet } from "@atproto/api/dist/client/types/app/bsky/r
 import axios from "axios";
 
 import { db } from "@senka/db/client";
-import { Domain, Link, Post, PostLike, PostMedia } from "@senka/db/schema";
+import {
+  Domain,
+  Link,
+  Post,
+  PostLike,
+  PostMedia,
+  User,
+} from "@senka/db/schema";
 
 async function getImageMetadata(
   url: string,
@@ -76,6 +83,18 @@ const fetchLikes = async (post: PostView) => {
     });
 
     for (const like of likes) {
+      // Try to insert the user if they don't exist
+      await db
+        .insert(User)
+        .values({
+          did: like.actor.did,
+          handle: like.actor.handle,
+          displayName: like.actor.displayName,
+          avatar: like.actor.avatar,
+          createdAt: new Date(),
+        })
+        .onConflictDoNothing();
+
       await db.insert(PostLike).values({
         postId: post.cid,
         userDid: like.actor.did,

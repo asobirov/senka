@@ -11,15 +11,26 @@ export const storeActorProfile = createTask({
   name: "store-actor-profile",
   schema: z.object({
     actor: z.string(),
+    forceStore: z.boolean().optional(),
   }),
-  task: async ({ actor }) => {
-    const { followers, following } = await storeProfileAndFollowers(actor);
+  task: async ({ actor, forceStore }) => {
+    const profile = await storeProfileAndFollowers(actor, forceStore);
+
+    if (!profile) {
+      console.log(`Skipping ${actor} because it did not match the criteria`);
+      return;
+    }
+
+    const { followers, following } = profile;
 
     console.log(`Added store-posts job for ${actor}`);
     await addJob({
       name: "store-posts",
       payload: {
         actor: actor,
+      },
+      options: {
+        maxAttempts: 5,
       },
     });
 
@@ -39,7 +50,9 @@ export const storeActorProfile = createTask({
       }
 
       if (!shouldParse(follow.parsedAt)) {
-        console.log(`Skipping ${follow.did} because it was parsed less than 30 days ago`);
+        console.log(
+          `Skipping ${follow.did} because it was parsed less than 30 days ago`,
+        );
         continue;
       }
 
@@ -49,6 +62,7 @@ export const storeActorProfile = createTask({
         payload: { actor: follow.did },
         options: {
           jobKey: `store-actor-profile:${follow.did}`,
+          maxAttempts: 5,
           runAt: new Date(Date.now() + i * 60 * 1000),
         },
       });
