@@ -22,24 +22,19 @@ training_args = TrainingArguments(
 
 collator = DataCollatorForSeq2Seq(tokenizer=tokenizer, model=model)
 
-
-def tokenize(row):
-    prompt = (
-        f"{row['instruction']}\n{row['input']}" if row["input"] else row["instruction"]
-    )
-
-    tokenized = tokenizer(
+def tokenize(example):
+    prompt = f"{example['instruction']}\n{example['input']}" if example['input'] else example['instruction']
+    return tokenizer(
         prompt,
-        text_target=row["output"],
+        text_target=example["output"],
         max_length=512,
         truncation=True,
         padding="max_length"
     )
-    return tokenized
 
 
 remove_columns = getattr(dataset["train"], "column_names", None)
-tokenized_ds = dataset.map(tokenize, batched=True, remove_columns=remove_columns)
+tokenized_ds = dataset.map(tokenize, batched=True, remove_columns=remove_columns, num_proc=4)
 
 trainer = Trainer(
     model=model,
