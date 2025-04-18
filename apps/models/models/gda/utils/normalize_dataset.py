@@ -8,5 +8,5 @@ def normalize_harpo(row: dict):
 def normalize_yang(row: dict):
     return {
         "domain": row["Domain"],
-        "label": "DGA" if row["label"] == 1 else "Benign",
+        "label": "DGA" if row["Label"] == 1 else "Benign",
     }
