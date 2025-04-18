@@ -27,13 +27,15 @@ def tokenize(row):
     prompt = (
         f"{row['instruction']}\n{row['input']}" if row["input"] else row["instruction"]
     )
-    result = tokenizer(prompt, truncation=True, padding="max_length", max_length=512)
-    with tokenizer.as_target_tokenizer():
-        label = tokenizer(
-            row["output"], truncation=True, padding="max_length", max_length=16
-        )
-    result["labels"] = label["input_ids"]
-    return result
+
+    tokenized = tokenizer(
+        prompt,
+        text_target=row["output"],
+        max_length=512,
+        truncation=True,
+        padding="max_length"
+    )
+    return tokenized
 
 
 remove_columns = getattr(dataset["train"], "column_names", None)
