@@ -1,0 +1,56 @@
+from transformers import TrainingArguments, Trainer, DataCollatorForSeq2Seq
+
+from .model import tokenizer, model
+from .dataset import dataset
+from ...lib.hf import hf_login
+
+hf_login()
+
+HF_REPO = "asobirov/dga-detector-Llama-3.2-3B-Instruct-lora"
+
+training_args = TrainingArguments(
+    output_dir="./gda-llama3.2-lora",
+    per_device_train_batch_size=2,
+    gradient_accumulation_steps=8,
+    logging_steps=10,
+    save_strategy="epoch",
+    num_train_epochs=3,
+    learning_rate=2e-4,
+    fp16=True,
+    report_to="none",
+)
+
+collator = DataCollatorForSeq2Seq(tokenizer=tokenizer, model=model)
+
+
+def tokenize(row):
+    prompt = (
+        f"{row['instruction']}\n{row['input']}" if row["input"] else row["instruction"]
+    )
+    result = tokenizer(prompt, truncation=True, padding="max_length", max_length=512)
+    with tokenizer.as_target_tokenizer():
+        label = tokenizer(
+            row["output"], truncation=True, padding="max_length", max_length=16
+        )
+    result["labels"] = label["input_ids"]
+    return result
+
+
+remove_columns = getattr(dataset["train"], "column_names", None)
+tokenized_ds = dataset.map(tokenize, batched=True, remove_columns=remove_columns)
+
+trainer = Trainer(
+    model=model,
+    args=training_args,
+    train_dataset=tokenized_ds["train"],
+    eval_dataset=tokenized_ds["test"],
+    tokenizer=tokenizer,
+    data_collator=collator,
+)
+
+if __name__ == "__main__":
+    trainer.train()
+
+    model.save_pretrained(HF_REPO)
+    model.push_to_hub(HF_REPO)
+    tokenizer.push_to_hub(HF_REPO)

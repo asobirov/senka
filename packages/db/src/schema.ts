@@ -118,7 +118,11 @@ export const Link = pgTable(
       .references(() => Domain.url, {
         onDelete: "set null",
       }),
+
     trustScore: t.integer().notNull().default(0),
+    relevanceScore: t.integer().default(0), // How relevant the link is to the post content
+    httpStatus: t.integer(),
+    contentType: t.text(),
 
     $type: t.text(),
 
@@ -129,6 +133,7 @@ export const Link = pgTable(
     postIdIdx: index("link_post_id_idx").on(t.postId),
     domainUrlIdx: index("link_domain_url_idx").on(t.domainUrl),
     trustScoreIdx: index("link_trust_score_idx").on(t.trustScore),
+    relevanceScoreIdx: index("link_relevance_score_idx").on(t.relevanceScore),
   }),
 );
 
@@ -142,13 +147,24 @@ export const Domain = pgTable(
   (t) => ({
     url: t.text().notNull().primaryKey(),
 
-    isSslValid: t.boolean().notNull().default(false),
     trustScore: t.integer().notNull().default(0),
-
+    isSslValid: t.boolean().notNull().default(false),
+    isMalicious: t.boolean().notNull().default(false),
+    contentQuality: t.integer().default(0),
+    hasValidWhois: t.boolean().notNull().default(false),
+    hasValidDns: t.boolean().notNull().default(false),
+    
+    category: t.text(),
+    popularity: t.integer().notNull().default(0), // Number of times linked
+    
+    createdAt: t.timestamp({ mode: "date", withTimezone: true }), // domain creation date, from WHOIS data
     lastCheckedAt: t.timestamp({ mode: "date", withTimezone: true }),
   }),
   (t) => ({
     trustScoreIdx: index("domain_trust_score_idx").on(t.trustScore),
+    categoryUdx: index("domain_category_udx").on(t.category),
+    popularityIdx: index("domain_popularity_idx").on(t.popularity),
+    contentQualityIdx: index("domain_content_quality_idx").on(t.contentQuality),
   }),
 );
 
