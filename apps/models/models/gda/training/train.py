@@ -22,16 +22,26 @@ training_args = TrainingArguments(
 
 collator = DataCollatorForSeq2Seq(tokenizer=tokenizer, model=model)
 
-def tokenize(example):
-    prompt = f"{example['instruction']}\n{example['input']}" if example['input'] else example['instruction']
-    return tokenizer(
+def tokenize(row):
+    prompt = f"{row['instruction']}\n{row['input']}" if row["input"] else row["instruction"]
+
+    model_inputs = tokenizer(
         prompt,
-        text_target=example["output"],
         max_length=512,
         truncation=True,
         padding="max_length"
     )
 
+    # Tokenize the target (labels) separately
+    target = tokenizer(
+        row["output"],
+        max_length=64,
+        truncation=True,
+        padding="max_length"
+    )
+
+    model_inputs["labels"] = target["input_ids"]
+    return model_inputs
 
 remove_columns = getattr(dataset["train"], "column_names", None)
 tokenized_ds = dataset.map(tokenize, batched=True, remove_columns=remove_columns, num_proc=4)
