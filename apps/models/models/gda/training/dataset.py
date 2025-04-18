@@ -4,14 +4,18 @@ from ..utils.normalize_dataset import normalize_harpo, normalize_yang
 from ..utils.instructions import format_instructions
 
 
-harpo_dataset = load_dataset("harpomaxx/dga-detection")
-yang_dataset = load_dataset("YangYang-Research/dga-detection")
+harpo_train = load_dataset("harpomaxx/dga-detection", split="train")
+harpo_test = load_dataset("harpomaxx/dga-detection", split="test")
+yang_train = load_dataset("YangYang-Research/dga-detection", split="train")
+yang_test = load_dataset("YangYang-Research/dga-detection", split="test")
 
-harpo_normalized = harpo_dataset.map(normalize_harpo)
-yang_normalized = yang_dataset.map(normalize_yang)
+harpo_train = harpo_train.map(normalize_harpo)
+harpo_test = harpo_test.map(normalize_harpo)
+yang_train = yang_train.map(normalize_yang)
+yang_test = yang_test.map(normalize_yang)
 
-dataset: Dataset = concatenate_datasets([harpo_normalized, yang_normalized])
+train_dataset = concatenate_datasets([harpo_train, yang_train]).map(format_instructions)
+test_dataset = concatenate_datasets([harpo_test, yang_test]).map(format_instructions)
 
-dataset_with_instructions = dataset.map(format_instructions)
+dataset = DatasetDict({"train": train_dataset, "test": test_dataset})
 
-dataset = dataset_with_instructions.train_test_split(test_size=0.2)
