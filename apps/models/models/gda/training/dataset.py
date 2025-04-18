@@ -6,8 +6,12 @@ from ..utils.instructions import format_instructions
 
 harpo_train = load_dataset("harpomaxx/dga-detection", split="train")
 harpo_test = load_dataset("harpomaxx/dga-detection", split="test")
-yang_train = load_dataset("YangYang-Research/dga-detection", split="train")
-yang_test = load_dataset("YangYang-Research/dga-detection", split="test")
+
+# YangYang-Research/dga-detection only has the train split
+yang_full = load_dataset("YangYang-Research/dga-detection", split="train")
+yang_split = yang_full.train_test_split(test_size=0.1)
+yang_train = yang_split["train"]
+yang_test = yang_split["test"]
 
 harpo_train = harpo_train.map(normalize_harpo)
 harpo_test = harpo_test.map(normalize_harpo)
