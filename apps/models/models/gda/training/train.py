@@ -20,31 +20,34 @@ training_args = TrainingArguments(
     report_to="none",
 )
 
-collator = DataCollatorForSeq2Seq(tokenizer=tokenizer, model=model)
+collator = DataCollatorForSeq2Seq(tokenizer=tokenizer, model=model, padding="max_length")
 
-def tokenize(row):
-    prompt = f"{row['instruction']}\n{row['input']}" if row["input"] else row["instruction"]
+def tokenize(batch):
+    prompts = [
+        f"{instr}\n{inp}" if inp else instr
+        for instr, inp in zip(batch["instruction"], batch["input"])
+    ]
 
     model_inputs = tokenizer(
-        prompt,
-        max_length=512,
+        prompts,
         truncation=True,
-        padding="max_length"
+        padding="longest",
+        return_tensors=None
     )
 
-    # Tokenize the target (labels) separately
-    target = tokenizer(
-        row["output"],
-        max_length=64,
+    targets = tokenizer(
+        batch["output"],
         truncation=True,
-        padding="max_length"
+        padding="longest",
+        return_tensors=None
     )
 
-    model_inputs["labels"] = target["input_ids"]
+    model_inputs["labels"] = targets["input_ids"]
     return model_inputs
 
+
 remove_columns = getattr(dataset["train"], "column_names", None)
-tokenized_ds = dataset.map(tokenize, batched=True, remove_columns=remove_columns, num_proc=4)
+tokenized_ds = dataset.map(tokenize, batched=True, remove_columns=remove_columns, num_proc=8, load_from_cache_file=True)
 
 trainer = Trainer(
     model=model,
