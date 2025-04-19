@@ -4,9 +4,13 @@ import os
 from ..utils.normalize_dataset import normalize_harpo, normalize_yang
 from ..utils.instructions import format_instructions
 
-if os.path.exists("cached/dga_preprocessed_dataset"):
-    dataset = load_from_disk("cached/dga_preprocessed_dataset")
-else:
+HF_DATASET_ID = "asobirov/dga-preprocessed"
+
+try:
+    dataset = load_dataset(HF_DATASET_ID)
+except Exception:
+    print("No remote dataset found. Building from scratch...")
+
     harpo_train = load_dataset("harpomaxx/dga-detection", split="train")
     harpo_test = load_dataset("harpomaxx/dga-detection", split="test")
 
@@ -25,6 +29,5 @@ else:
     test_dataset = concatenate_datasets([harpo_test, yang_test]).map(format_instructions)
 
     dataset = DatasetDict({"train": train_dataset, "test": test_dataset})
-
-    dataset.save_to_disk("cached/dga_preprocessed_dataset")
-
+    
+    dataset.push_to_hub(HF_DATASET_ID, private=True)
